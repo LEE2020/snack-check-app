@@ -17,6 +17,10 @@
   const resultSnippet = document.getElementById("resultSnippet");
   const loading = document.getElementById("loading");
   const loadingText = document.getElementById("loadingText");
+  const cameraVideo = document.getElementById("cameraVideo");
+  const cameraCanvas = document.getElementById("cameraCanvas");
+
+  var cameraStream = null;
 
   function setPreviewFromFile(file) {
     const url = URL.createObjectURL(file);
@@ -127,10 +131,78 @@
     }, 500);
   }
 
+  function stopCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(function (t) { t.stop(); });
+      cameraStream = null;
+    }
+    if (cameraVideo && cameraVideo.srcObject) cameraVideo.srcObject = null;
+  }
+
+  function showCameraPreview() {
+    if (!cameraVideo || !cameraStream) return;
+    placeholder.style.display = "none";
+    previewImg.style.display = "none";
+    previewBox.classList.add("has-image");
+    if (!previewBox.contains(cameraVideo)) {
+      cameraVideo.style.display = "block";
+      cameraVideo.style.width = "100%";
+      cameraVideo.style.height = "100%";
+      cameraVideo.style.objectFit = "cover";
+      cameraVideo.style.position = "absolute";
+      cameraVideo.style.top = "0";
+      cameraVideo.style.left = "0";
+      previewBox.appendChild(cameraVideo);
+    }
+    cameraVideo.style.display = "block";
+    btnCamera.textContent = "拍照识别";
+  }
+
+  function hideCameraPreview() {
+    if (cameraVideo && cameraVideo.parentNode === previewBox) {
+      previewBox.removeChild(cameraVideo);
+      cameraVideo.style.display = "none";
+    }
+    placeholder.style.display = "";
+    previewImg.style.display = "";
+  }
+
   btnCamera.addEventListener("click", function () {
-    fileInput.removeAttribute("capture");
-    fileInput.setAttribute("capture", "environment");
-    fileInput.click();
+    if (cameraStream) {
+      if (!cameraVideo.readyState || cameraVideo.readyState < 2) return;
+      cameraCanvas.width = cameraVideo.videoWidth;
+      cameraCanvas.height = cameraVideo.videoHeight;
+      var ctx = cameraCanvas.getContext("2d");
+      ctx.drawImage(cameraVideo, 0, 0);
+      stopCamera();
+      hideCameraPreview();
+      previewImg.src = cameraCanvas.toDataURL("image/jpeg", 0.9);
+      previewImg.style.display = "block";
+      btnCamera.textContent = "拍照";
+      runOCRAndAnalyze(previewImg);
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      fileInput.removeAttribute("capture");
+      fileInput.setAttribute("capture", "environment");
+      fileInput.click();
+      return;
+    }
+
+    var constraints = { video: { facingMode: "environment" }, audio: false };
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(function (stream) {
+        cameraStream = stream;
+        cameraVideo.srcObject = stream;
+        cameraVideo.play();
+        showCameraPreview();
+      })
+      .catch(function () {
+        fileInput.removeAttribute("capture");
+        fileInput.setAttribute("capture", "environment");
+        fileInput.click();
+      });
   });
 
   btnUpload.addEventListener("click", function () {
