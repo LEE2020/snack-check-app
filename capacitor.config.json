@@ -1,0 +1,12 @@
+{
+  "appId": "com.snackcheck.tangyou",
+  "appName": "糖友零食助手",
+  "webDir": ".",
+  "server": {
+    "allowNavigation": [],
+    "cleartext": true
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}

@@ -1,0 +1,5 @@
+node_modules/
+.vercel
+ios/
+.DS_Store
+*.log

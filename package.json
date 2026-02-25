@@ -1,0 +1,11 @@
+{
+  "name": "snack-check-app",
+  "version": "1.0.0",
+  "description": "糖友零食助手 - 拍照识别糖尿病患者能否食用",
+  "scripts": {
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npx cap sync ios",
+    "cap:open:ios": "npx cap open ios"
+  },
+  "private": true
+}
