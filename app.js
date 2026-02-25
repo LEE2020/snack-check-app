@@ -24,12 +24,19 @@
 
   function setPreviewFromFile(file) {
     const url = URL.createObjectURL(file);
-    previewImg.onload = function () { URL.revokeObjectURL(url); };
-    previewImg.src = url;
     previewBox.classList.add("has-image");
     placeholder.style.display = "none";
     previewImg.style.display = "block";
-    runOCRAndAnalyze(previewImg);
+    previewImg.onload = function () {
+      URL.revokeObjectURL(url);
+      runOCRAndAnalyzeWithImage(previewImg);
+    };
+    previewImg.onerror = function () {
+      URL.revokeObjectURL(url);
+      showLoading(false);
+      showAnalysisResult({ badge: "caution", summary: "图片加载失败", details: "请重新选择图片。", sugarLevel: "", portionAdvice: "", snippet: "" });
+    };
+    previewImg.src = url;
   }
 
   function showLoading(show, message) {
@@ -63,12 +70,34 @@
     }
   }
 
-  function runOCRAndAnalyze(img) {
+  var MAX_OCR_SIZE = 1200;
+
+  function getImageForOCR(img, callback) {
+    var w = img.naturalWidth || img.width || 0;
+    var h = img.naturalHeight || img.height || 0;
+    if (!w || !h) {
+      callback(img);
+      return;
+    }
+    if (w <= MAX_OCR_SIZE && h <= MAX_OCR_SIZE) {
+      callback(img);
+      return;
+    }
+    var scale = Math.min(MAX_OCR_SIZE / w, MAX_OCR_SIZE / h, 1);
+    var c = document.createElement("canvas");
+    c.width = Math.round(w * scale);
+    c.height = Math.round(h * scale);
+    var ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    callback(c);
+  }
+
+  function runOCRAndAnalyzeWithImage(imgOrCanvas) {
     if (typeof Tesseract === "undefined") {
       showLoading(true, "识别引擎加载中，请稍候…");
       waitForTesseract(function () {
         showLoading(false);
-        runOCRAndAnalyze(img);
+        runOCRAndAnalyzeWithImage(imgOrCanvas);
       }, 15, function () {
         showLoading(false);
         showAnalysisResult({
@@ -85,34 +114,41 @@
 
     showLoading(true, "正在识别图中文字...");
 
-    Tesseract.recognize(img, "chi_sim+eng", {
-      logger: function (m) {
-        if (m.status === "recognizing text" && loadingText) loadingText.textContent = "正在分析文字...";
-      }
-    })
-      .then(function (out) {
-        var text = (out && out.data && out.data.text) ? out.data.text.trim() : "";
-        var result = typeof analyzeForDiabetic === "function" ? analyzeForDiabetic(text) : {
-          badge: "caution",
-          summary: "无法分析",
-          details: "请确保图片中有清晰的配料表或营养成分表。",
-          snippet: text.slice(0, 500)
-        };
-        showLoading(false);
-        showAnalysisResult(result);
+    getImageForOCR(imgOrCanvas, function (source) {
+      Tesseract.recognize(source, "chi_sim+eng", {
+        logger: function (m) {
+          if (m.status === "recognizing text" && loadingText) loadingText.textContent = "正在分析文字...";
+        }
       })
-      .catch(function (err) {
-        showLoading(false);
-        showAnalysisResult({
-          badge: "caution",
-          summary: "识别失败",
-          details: "请换一张清晰的、包含配料表或营养成分表的照片重试。",
-          sugarLevel: "",
-          portionAdvice: "",
-          snippet: ""
+        .then(function (out) {
+          var text = (out && out.data && out.data.text) ? out.data.text.trim() : "";
+          var result = typeof analyzeForDiabetic === "function" ? analyzeForDiabetic(text) : {
+            badge: "caution",
+            summary: "无法分析",
+            details: "请确保图片中有清晰的配料表或营养成分表。",
+            snippet: text.slice(0, 500)
+          };
+          showLoading(false);
+          showAnalysisResult(result);
+        })
+        .catch(function (err) {
+          showLoading(false);
+          var errMsg = (err && err.message) ? err.message : String(err);
+          console.error("OCR error:", errMsg);
+          showAnalysisResult({
+            badge: "caution",
+            summary: "识别失败",
+            details: "图片已清晰仍失败时，请尝试重新拍照或从相册选择后重试。若多次失败，请检查网络或稍后再试。",
+            sugarLevel: "",
+            portionAdvice: "",
+            snippet: ""
+          });
         });
-        console.error(err);
-      });
+    });
+  }
+
+  function runOCRAndAnalyze(img) {
+    runOCRAndAnalyzeWithImage(img);
   }
 
   function waitForTesseract(onReady, maxAttempts, onTimeout) {
@@ -176,10 +212,17 @@
       ctx.drawImage(cameraVideo, 0, 0);
       stopCamera();
       hideCameraPreview();
-      previewImg.src = cameraCanvas.toDataURL("image/jpeg", 0.9);
       previewImg.style.display = "block";
       btnCamera.textContent = "拍照";
-      runOCRAndAnalyze(previewImg);
+      showLoading(true, "正在识别图中文字...");
+      previewImg.onload = function () {
+        runOCRAndAnalyzeWithImage(previewImg);
+      };
+      previewImg.onerror = function () {
+        showLoading(false);
+        showAnalysisResult({ badge: "caution", summary: "图片加载失败", details: "请重新拍照。", sugarLevel: "", portionAdvice: "", snippet: "" });
+      };
+      previewImg.src = cameraCanvas.toDataURL("image/jpeg", 0.9);
       return;
     }
 
