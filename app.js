@@ -9,12 +9,14 @@
   const resultCard = document.getElementById("resultCard");
   const resultBadge = document.getElementById("resultBadge");
   const resultTitle = document.getElementById("resultTitle");
-  const resultFood = document.getElementById("resultFood");
+  const resultSugarLevel = document.getElementById("resultSugarLevel");
+  const resultPortion = document.getElementById("resultPortion");
   const resultAdvice = document.getElementById("resultAdvice");
   const resultReason = document.getElementById("resultReason");
+  const resultDetails = document.getElementById("resultDetails");
+  const resultSnippet = document.getElementById("resultSnippet");
   const loading = document.getElementById("loading");
-
-  let model = null;
+  const loadingText = document.getElementById("loadingText");
 
   function setPreviewFromFile(file) {
     const url = URL.createObjectURL(file);
@@ -23,78 +25,88 @@
     previewBox.classList.add("has-image");
     placeholder.style.display = "none";
     previewImg.style.display = "block";
-    runRecognition(previewImg);
+    runOCRAndAnalyze(previewImg);
   }
 
-  function showLoading(show) {
+  function showLoading(show, message) {
     loading.hidden = !show;
+    if (loadingText) loadingText.textContent = message || "正在识别图中文字...";
     if (show) resultSection.hidden = true;
   }
 
-  function showResult(advice, className, probability) {
+  function showAnalysisResult(result) {
     resultSection.hidden = false;
     loading.hidden = true;
 
-    const names = {
-      ok: "可以适量吃",
-      caution: "建议少吃或注意",
-      avoid: "不建议吃"
-    };
+    const names = { ok: "可以适量吃", caution: "建议少吃或注意", avoid: "不宜食用／不能吃" };
 
-    resultCard.className = "result-card " + (advice ? advice.can_eat : "caution");
-    resultBadge.textContent = advice ? names[advice.can_eat] : "建议注意";
-    resultBadge.className = "result-badge " + (advice ? advice.can_eat : "caution");
-    resultTitle.textContent = "识别结果";
-    resultFood.textContent = advice ? advice.name_zh : (className || "未识别到常见食物");
-    resultAdvice.textContent = advice ? (advice.can_eat === "ok" ? "可适量食用" : advice.can_eat === "caution" ? "建议少吃或注意份量" : "不建议食用") : "请查看配料表或咨询医生";
-    resultReason.textContent = advice ? advice.reason : "未在数据库中匹配到该食物，请以产品配料表与医生建议为准。";
+    resultCard.className = "result-card " + (result.badge || "caution");
+    resultBadge.textContent = names[result.badge] || "建议注意";
+    resultBadge.className = "result-badge " + (result.badge || "caution");
+    resultTitle.textContent = "分析结果";
+
+    if (resultSugarLevel) resultSugarLevel.textContent = result.sugarLevel || "";
+    if (resultPortion) {
+      resultPortion.textContent = result.portionAdvice || "";
+      resultPortion.classList.toggle("forbid", !!result.portionForbid);
+    }
+    resultAdvice.textContent = result.summary || "";
+    resultReason.textContent = result.details || "";
+    if (resultDetails && resultSnippet) {
+      resultDetails.open = false;
+      resultSnippet.textContent = result.snippet ? result.snippet.slice(0, 800) : "";
+      resultDetails.style.display = result.snippet ? "block" : "none";
+    }
   }
 
-  function runRecognition(img) {
-    if (!model) {
+  function runOCRAndAnalyze(img) {
+    if (typeof Tesseract === "undefined") {
       showLoading(false);
-      showResult(null, null);
-      resultReason.textContent = "模型加载中，请稍候再试或刷新页面。";
+      showAnalysisResult({
+        badge: "caution",
+        summary: "识别引擎未加载",
+        details: "请刷新页面后重试。",
+        snippet: ""
+      });
       return;
     }
-    showLoading(true);
-    model.classify(img, 5).then(function (predictions) {
-      showLoading(false);
-      let used = null;
-      let bestName = "";
-      let bestProb = 0;
-      for (let i = 0; i < predictions.length; i++) {
-        const p = predictions[i];
-        const a = typeof getAdvice !== "undefined" ? getAdvice(p.className) : null;
-        if (a) {
-          used = a;
-          bestName = p.className;
-          bestProb = p.probability;
-          break;
-        }
-        if (p.probability > bestProb) {
-          bestProb = p.probability;
-          bestName = p.className;
-        }
+
+    showLoading(true, "正在识别图中文字...");
+
+    Tesseract.recognize(img, "chi_sim+eng", {
+      logger: function (m) {
+        if (m.status === "recognizing text" && loadingText) loadingText.textContent = "正在分析文字...";
       }
-      if (!used && bestName) used = getAdvice(bestName);
-      showResult(used, bestName, bestProb);
-    }).catch(function (err) {
-      showLoading(false);
-      showResult(null, "识别失败");
-      resultReason.textContent = "识别出错，请换一张清晰的食物照片重试。";
-      console.error(err);
-    });
+    })
+      .then(function (out) {
+        var text = (out && out.data && out.data.text) ? out.data.text.trim() : "";
+        var result = typeof analyzeForDiabetic === "function" ? analyzeForDiabetic(text) : {
+          badge: "caution",
+          summary: "无法分析",
+          details: "请确保图片中有清晰的配料表或营养成分表。",
+          snippet: text.slice(0, 500)
+        };
+        showLoading(false);
+        showAnalysisResult(result);
+      })
+      .catch(function (err) {
+        showLoading(false);
+        showAnalysisResult({
+          badge: "caution",
+          summary: "识别失败",
+          details: "请换一张清晰的、包含配料表或营养成分表的照片重试。",
+          snippet: ""
+        });
+        console.error(err);
+      });
   }
 
-  // 拍照：唤起系统相机（移动端会直接打开相机）
   btnCamera.addEventListener("click", function () {
     fileInput.removeAttribute("capture");
     fileInput.setAttribute("capture", "environment");
     fileInput.click();
   });
 
-  // 从相册选择：不设 capture，打开相册
   btnUpload.addEventListener("click", function () {
     fileInput.removeAttribute("capture");
     fileInput.click();
@@ -105,18 +117,4 @@
     if (file && file.type.indexOf("image") === 0) setPreviewFromFile(file);
     this.value = "";
   });
-
-  // 模型加载完成后，若已有图片则自动识别一次（用户可能在加载前就选了图）
-  function onModelReady(m) {
-    model = m;
-    if (previewImg.src && previewImg.src.indexOf("blob:") !== -1) {
-      runRecognition(previewImg);
-    }
-  }
-
-  if (typeof mobilenet !== "undefined") {
-    mobilenet.load().then(onModelReady).catch(function (e) {
-      console.error("MobileNet load failed", e);
-    });
-  }
 })();

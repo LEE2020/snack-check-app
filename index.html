@@ -44,16 +44,21 @@
       <section class="result-section" id="resultSection" hidden>
         <div class="result-card" id="resultCard">
           <div class="result-badge" id="resultBadge">建议</div>
-          <h2 id="resultTitle">识别结果</h2>
-          <p id="resultFood" class="result-food"></p>
+          <h2 id="resultTitle">分析结果</h2>
+          <p id="resultSugarLevel" class="result-sugar-level"></p>
+          <p id="resultPortion" class="result-portion"></p>
           <p id="resultAdvice" class="result-advice"></p>
           <p id="resultReason" class="result-reason"></p>
+          <details class="result-details" id="resultDetails">
+            <summary>识别到的文字</summary>
+            <pre id="resultSnippet" class="result-snippet"></pre>
+          </details>
         </div>
       </section>
 
       <section class="loading" id="loading" hidden>
         <div class="spinner"></div>
-        <p>正在识别中...</p>
+        <p id="loadingText">正在识别图中文字...</p>
       </section>
 
       <div class="disclaimer">
@@ -62,9 +67,8 @@
     </main>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0/dist/mobilenet.min.js"></script>
-  <script src="food-db.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+  <script src="nutrition-analyze.js"></script>
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
