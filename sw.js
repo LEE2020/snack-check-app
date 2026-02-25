@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snack-check-v2';
+const CACHE_NAME = 'snack-check-v3';
 const STATIC_URLS = [
   './',
   './index.html',

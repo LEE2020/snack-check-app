@@ -42,7 +42,7 @@
 
 ### 1. 当成“网页应用”上架（最简单）
 
-- 把本文件夹里的所有文件（index.html、style.css、app.js、food-db.js）**上传到一个免费静态网站**，例如：
+- 把本文件夹里的所有文件（index.html、style.css、app.js、nutrition-analyze.js 等）**上传到一个免费静态网站**，例如：
   - [Vercel](https://vercel.com)：注册 → New Project → 上传本文件夹或连 GitHub 上传。
   - [Netlify](https://www.netlify.com)：注册 → 把文件夹拖进页面里的上传区。
 - 部署后会给你一个网址，例如 `https://你的项目名.vercel.app`。
@@ -70,7 +70,7 @@
 
 - 前端：纯 HTML + CSS + JavaScript，无框架。
 - 识别：浏览器内运行 [TensorFlow.js](https://www.tensorflow.org/js) + [MobileNet](https://github.com/tensorflow/tfjs-models/tree/master/mobilenet)（ImageNet 1000 类），无需后端、无需 API Key。
-- 建议规则：`food-db.js` 里维护「英文类别 → 中文名 + 可吃/注意/不建议 + 原因」；未匹配到的类别会提示“请查看配料表或咨询医生”。
+- 本应用**不使用食物名称数据库**，仅根据图中识别出的**配料表与营养成分表**文字，结合糖友摄入标准分析含糖量与食用量建议。
 
 ---
 
