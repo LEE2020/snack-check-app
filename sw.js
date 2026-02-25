@@ -1,10 +1,11 @@
-const CACHE_NAME = 'snack-check-v1';
+const CACHE_NAME = 'snack-check-v2';
 const STATIC_URLS = [
   './',
   './index.html',
   './style.css',
   './app.js',
-  './food-db.js'
+  './nutrition-analyze.js',
+  './manifest.json'
 ];
 
 self.addEventListener('install', function (e) {

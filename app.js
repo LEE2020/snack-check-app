@@ -61,12 +61,20 @@
 
   function runOCRAndAnalyze(img) {
     if (typeof Tesseract === "undefined") {
-      showLoading(false);
-      showAnalysisResult({
-        badge: "caution",
-        summary: "识别引擎未加载",
-        details: "请刷新页面后重试。",
-        snippet: ""
+      showLoading(true, "识别引擎加载中，请稍候…");
+      waitForTesseract(function () {
+        showLoading(false);
+        runOCRAndAnalyze(img);
+      }, 15, function () {
+        showLoading(false);
+        showAnalysisResult({
+          badge: "caution",
+          summary: "识别引擎加载超时",
+          details: "请检查网络后刷新页面，或稍候再重新选择图片。",
+          sugarLevel: "",
+          portionAdvice: "",
+          snippet: ""
+        });
       });
       return;
     }
@@ -95,10 +103,28 @@
           badge: "caution",
           summary: "识别失败",
           details: "请换一张清晰的、包含配料表或营养成分表的照片重试。",
+          sugarLevel: "",
+          portionAdvice: "",
           snippet: ""
         });
         console.error(err);
       });
+  }
+
+  function waitForTesseract(onReady, maxAttempts, onTimeout) {
+    var attempts = 0;
+    var t = setInterval(function () {
+      attempts++;
+      if (typeof Tesseract !== "undefined") {
+        clearInterval(t);
+        onReady();
+        return;
+      }
+      if (attempts >= maxAttempts) {
+        clearInterval(t);
+        if (onTimeout) onTimeout();
+      }
+    }, 500);
   }
 
   btnCamera.addEventListener("click", function () {
