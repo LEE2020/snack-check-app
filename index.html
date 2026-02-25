@@ -31,13 +31,13 @@
         </div>
 
         <div class="actions">
-          <button type="button" class="btn btn-camera" id="btnCamera" disabled>
+          <button type="button" class="btn btn-camera" id="btnCamera">
             拍照
           </button>
           <button type="button" class="btn btn-upload" id="btnUpload">
             从相册选择
           </button>
-          <input type="file" id="fileInput" accept="image/*" hidden />
+          <input type="file" id="fileInput" accept="image/*" capture="environment" hidden />
         </div>
       </section>
 
@@ -61,9 +61,6 @@
       </div>
     </main>
   </div>
-
-  <video id="camera" autoplay playsinline hidden></video>
-  <canvas id="canvas" hidden></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0/dist/mobilenet.min.js"></script>
