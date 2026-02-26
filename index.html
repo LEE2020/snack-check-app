@@ -44,15 +44,19 @@
       <section class="result-section" id="resultSection" hidden>
         <div class="result-card" id="resultCard">
           <div class="result-badge" id="resultBadge">建议</div>
-          <h2 id="resultTitle">分析结果</h2>
-          <p id="resultSugarLevel" class="result-sugar-level"></p>
-          <p id="resultPortion" class="result-portion"></p>
-          <p id="resultAdvice" class="result-advice"></p>
-          <p id="resultReason" class="result-reason"></p>
-          <details class="result-details" id="resultDetails">
-            <summary>识别到的文字</summary>
+
+          <div class="result-block result-ingredients" id="resultIngredientsBlock">
+            <h3 class="result-block-title">成分说明（图中识别内容）</h3>
             <pre id="resultSnippet" class="result-snippet"></pre>
-          </details>
+          </div>
+
+          <div class="result-block result-conclusion">
+            <h3 class="result-block-title">分析结论</h3>
+            <p id="resultSugarLevel" class="result-sugar-level"></p>
+            <p id="resultPortion" class="result-portion"></p>
+            <p id="resultAdvice" class="result-advice"></p>
+            <p id="resultReason" class="result-reason"></p>
+          </div>
         </div>
       </section>
 

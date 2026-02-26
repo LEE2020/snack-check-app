@@ -112,7 +112,7 @@
   }
 
   function analyzeForDiabetic(ocrText) {
-    var snippet = (ocrText || "").slice(0, 500).trim();
+    var snippet = (ocrText || "").slice(0, 2000).trim();
     if (!ocrText || ocrText.trim().length < 2) {
       return {
         badge: "caution",

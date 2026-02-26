@@ -13,8 +13,8 @@
   const resultPortion = document.getElementById("resultPortion");
   const resultAdvice = document.getElementById("resultAdvice");
   const resultReason = document.getElementById("resultReason");
-  const resultDetails = document.getElementById("resultDetails");
   const resultSnippet = document.getElementById("resultSnippet");
+  const resultIngredientsBlock = document.getElementById("resultIngredientsBlock");
   const loading = document.getElementById("loading");
   const loadingText = document.getElementById("loadingText");
   const cameraVideo = document.getElementById("cameraVideo");
@@ -54,7 +54,12 @@
     resultCard.className = "result-card " + (result.badge || "caution");
     resultBadge.textContent = names[result.badge] || "建议注意";
     resultBadge.className = "result-badge " + (result.badge || "caution");
-    resultTitle.textContent = "分析结果";
+
+    if (resultIngredientsBlock && resultSnippet) {
+      var text = (result.snippet || "").trim();
+      resultSnippet.textContent = text || "（未识别到文字，请确保拍摄到配料表或营养成分表）";
+      resultIngredientsBlock.style.display = text ? "block" : "block";
+    }
 
     if (resultSugarLevel) resultSugarLevel.textContent = result.sugarLevel || "";
     if (resultPortion) {
@@ -63,11 +68,6 @@
     }
     resultAdvice.textContent = result.summary || "";
     resultReason.textContent = result.details || "";
-    if (resultDetails && resultSnippet) {
-      resultDetails.open = false;
-      resultSnippet.textContent = result.snippet ? result.snippet.slice(0, 800) : "";
-      resultDetails.style.display = result.snippet ? "block" : "none";
-    }
   }
 
   var MAX_OCR_SIZE = 1200;
